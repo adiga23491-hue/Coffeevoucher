@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -248,7 +249,6 @@ function selectToday() {
   setTimeout(() => nextStep(), 220);
 }
 
-
 function onDatePicked(val) {
   if (!val) return;
   answers.meetingDate = val;
@@ -295,7 +295,11 @@ function renderSummary(area) {
   ];
   const rows = fields.map(f => {
     let val = answers[f.key] || '—';
-    if (f.key === 'meetingDate') val = formatDisplayDate(answers.meetingDate) || '—';
+    if (f.key === 'meetingDate') {
+      val = answers.meetingDateType === 'today'
+        ? `Today — ${getTodayStr()}`
+        : (formatDisplayDate(answers.meetingDate) || '—');
+    }
     if (f.key === 'meetingTime') val = `${answers.meetingTime || '—'} ${answers.ampm || ''}`;
     return `<div class="summary-row"><div class="summary-key">${f.label}</div><div class="summary-val">${val}</div></div>`;
   }).join('');
@@ -310,7 +314,9 @@ async function submitRecord() {
     'BDR Name': answers.bdrName || '',
     "Lead's First Name": answers.firstName || '',
     "Lead's Email": answers.email || '',
-    'Meeting Date': formatDisplayDate(answers.meetingDate) || '',
+    'Meeting Date': (answers.meetingDateType === 'today')
+      ? 'Today'
+      : (formatDisplayDate(answers.meetingDate) || ''),
     'Meeting Time': answers.meetingTime || '',
     'AM/PM': answers.ampm || ''
   };
@@ -363,3 +369,4 @@ render();
 </script>
 </body>
 </html>
+```
