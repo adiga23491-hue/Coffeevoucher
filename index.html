@@ -47,6 +47,20 @@ body::after {
 .choice-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 20px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 0.9rem; cursor: pointer; text-align: right; transition: all 0.2s; position: relative; overflow: hidden; }
 .choice-btn:hover, .choice-btn.selected { border-color: var(--accent); color: var(--accent); background: rgba(0,180,216,0.07); }
 .choice-btn.selected::after { content: '✓'; position: absolute; left: 20px; top: 50%; transform: translateY(-50%); color: var(--accent); }
+
+/* Date picker button style */
+.date-pick-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 20px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 0.9rem; cursor: pointer; text-align: right; transition: all 0.2s; position: relative; overflow: hidden; width: 100%; display: flex; align-items: center; justify-content: space-between; }
+.date-pick-btn:hover, .date-pick-btn.selected { border-color: var(--accent); color: var(--accent); background: rgba(0,180,216,0.07); }
+.date-pick-btn .cal-icon { font-size: 1.1rem; opacity: 0.7; }
+.date-pick-btn .selected-date { font-size: 0.8rem; color: var(--accent); margin-right: 8px; }
+
+/* Hidden date input overlay */
+.date-input-hidden {
+  position: absolute; opacity: 0; width: 100%; height: 100%;
+  top: 0; left: 0; cursor: pointer;
+  /* Make sure the native picker still opens on click */
+}
+
 .text-input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 20px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 0.95rem; outline: none; transition: border-color 0.2s; direction: ltr; }
 .text-input:focus { border-color: var(--accent); }
 .time-row { display: flex; gap: 12px; align-items: center; }
@@ -94,7 +108,6 @@ body::after {
 </div>
 
 <script>
-// ✅ NEW: Flow URL (Power Automate HTTP endpoint)
 const FLOW_URL = "https://defaulta93ccb028e3344398bd5e19c0ac1fd.1b.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/e0556640b3cb4f3f997229e2699bfcce/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=mAziR165qpVg6EeOQQP5oi3sb4-B1SeXiAaSbhDUVFI";
 
 const STEPS = [
@@ -104,12 +117,28 @@ const STEPS = [
   },
   { key: 'firstName', label: 'LEAD', question: "Lead's First Name", type: 'text', placeholder: 'Enter first name...' },
   { key: 'email', label: 'CONTACT', question: "Lead's Email", type: 'text', placeholder: 'email@company.com' },
-  { key: 'meetingDate', label: 'MEETING', question: 'Meeting Date', type: 'choice', options: ['today', 'tomorrow', 'on Monday'] },
+  { key: 'meetingDate', label: 'MEETING', question: 'Meeting Date', type: 'meetingDate' },
   { key: 'meetingTime', label: 'MEETING', question: 'Meeting Time', type: 'time' }
 ];
 
 let current = 0, answers = {}, records = [];
 document.getElementById('totalSteps').textContent = STEPS.length;
+
+function getTodayStr() {
+  const d = new Date();
+  return d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function getTodayISO() {
+  const d = new Date();
+  return d.toISOString().split('T')[0];
+}
+
+function formatDisplayDate(isoStr) {
+  if (!isoStr) return '';
+  const [y, m, day] = isoStr.split('-');
+  return `${day}/${m}/${y}`;
+}
 
 function getErrorMessage(key, value) {
   if (key === 'firstName') {
@@ -123,12 +152,14 @@ function getErrorMessage(key, value) {
     if (!v.length) return 'Please enter an email address';
     if (!v.includes('@')) return 'Email must contain @';
   }
+  if (key === 'meetingDate') return 'Please select a meeting date';
   return 'Please fill this field to continue';
 }
 
 function canProceed() {
   const step = STEPS[current];
   if (step.type === 'choice') return !!answers[step.key];
+  if (step.type === 'meetingDate') return !!answers.meetingDate;
   if (step.key === 'firstName') {
     const v = (answers.firstName || '').trim();
     return v.length > 0 && /^[A-Z]/.test(v) && /^[A-Za-z]+$/.test(v);
@@ -157,8 +188,30 @@ function render() {
       step.options.map(opt =>
         `<button class="choice-btn ${answers[step.key] === opt ? 'selected' : ''}" onclick="selectChoice(this,'${opt.replace(/'/g, "\\'")}')">${opt}</button>`
       ).join('') + `</div>`;
+
+  } else if (step.type === 'meetingDate') {
+    const selectedDate = answers.meetingDate || '';
+    const isToday = answers.meetingDateType === 'today';
+    const isPick  = answers.meetingDateType === 'pick';
+
+    inputHTML = `<div class="choices">
+      <button class="choice-btn ${isToday ? 'selected' : ''}" onclick="selectToday()">Today — ${getTodayStr()}</button>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <input
+          type="date"
+          id="datePicker"
+          min="${getTodayISO()}"
+          value="${isPick && selectedDate ? selectedDate : ''}"
+          class="text-input ${isPick ? 'date-selected' : ''}"
+          style="cursor:pointer; color-scheme:dark;"
+          onchange="onDatePicked(this.value)"
+        />
+      </div>
+    </div>`;
+
   } else if (step.type === 'text') {
     inputHTML = `<input class="text-input" id="mainInput" type="text" placeholder="${step.placeholder}" value="${answers[step.key] || ''}" oninput="answers['${step.key}']=this.value" onkeydown="if(event.key==='Enter')nextStep()" />`;
+
   } else if (step.type === 'time') {
     const t = answers.meetingTime || '', ap = answers.ampm || '';
     inputHTML = `<div class="time-row">
@@ -183,9 +236,25 @@ function render() {
     </div>
   </div>`;
 
-  if (step.type !== 'choice') {
+  if (step.type !== 'choice' && step.type !== 'meetingDate') {
     setTimeout(() => { const el = document.getElementById('mainInput'); if (el) el.focus(); }, 50);
   }
+}
+
+function selectToday() {
+  answers.meetingDate = getTodayISO();
+  answers.meetingDateType = 'today';
+  render();
+  setTimeout(() => nextStep(), 220);
+}
+
+
+function onDatePicked(val) {
+  if (!val) return;
+  answers.meetingDate = val;
+  answers.meetingDateType = 'pick';
+  render();
+  setTimeout(() => nextStep(), 220);
 }
 
 function handleTimeInput(input) {
@@ -226,6 +295,7 @@ function renderSummary(area) {
   ];
   const rows = fields.map(f => {
     let val = answers[f.key] || '—';
+    if (f.key === 'meetingDate') val = formatDisplayDate(answers.meetingDate) || '—';
     if (f.key === 'meetingTime') val = `${answers.meetingTime || '—'} ${answers.ampm || ''}`;
     return `<div class="summary-row"><div class="summary-key">${f.label}</div><div class="summary-val">${val}</div></div>`;
   }).join('');
@@ -235,18 +305,16 @@ function renderSummary(area) {
   </div>`;
 }
 
-// ✅ CHANGED: only this function (now also sends to Power Automate)
 async function submitRecord() {
   const row = {
     'BDR Name': answers.bdrName || '',
     "Lead's First Name": answers.firstName || '',
     "Lead's Email": answers.email || '',
-    'Meeting Date': answers.meetingDate || '',
+    'Meeting Date': formatDisplayDate(answers.meetingDate) || '',
     'Meeting Time': answers.meetingTime || '',
     'AM/PM': answers.ampm || ''
   };
 
-  // 1) Send to Excel Online via Power Automate (non-blocking UI-wise)
   try {
     const payload = {
       bdrName: row['BDR Name'],
@@ -266,11 +334,9 @@ async function submitRecord() {
 
     if (!res.ok) throw new Error(`Flow call failed: ${res.status}`);
   } catch (e) {
-    // If sending fails, show a clear message but keep local record behavior
     alert('Saved locally, but failed to save to Excel Online (Power Automate). Check Flow Run History / console.');
   }
 
-  // 2) Original behavior (unchanged)
   records.push(row);
   document.getElementById('recordCount').textContent = records.length;
   document.getElementById('downloadBtn').disabled = false;
