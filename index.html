@@ -230,7 +230,7 @@ function renderSummary(area) {
     return `<div class="summary-row"><div class="summary-key">${f.label}</div><div class="summary-val">${val}</div></div>`;
   }).join('');
   area.innerHTML = `<div class="summary"><h2>Review Entry</h2>${rows}
-    <button class="btn-submit" onclick="submitRecord()">✓ SAVE LEAD</button>
+    <button class="btn-submit" onclick="submitRecord()">Send</button>
     <button class="btn-edit" onclick="prevStep()">← EDIT</button>
   </div>`;
 }
