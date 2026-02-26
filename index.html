@@ -4,118 +4,296 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BDR Lead Form</title>
-
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-body{
-  font-family: Arial;
-  background:#0a0a0f;
-  color:white;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #071530; --surface: #0d2045; --border: #1a3a6e;
+  --accent: #00b4d8; --accent2: #f26522;
+  --text: #e8f0f8; --muted: #5a7a9a; --card: #0f2550;
 }
-
-.card{
-  background:#16161f;
-  padding:30px;
-  border-radius:12px;
-  width:400px;
+body {
+  background: var(--bg); color: var(--text); font-family: 'DM Mono', monospace;
+  min-height: 100vh; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; padding: 24px;
+  position: relative; overflow-x: hidden;
 }
-
-input, select, button{
-  width:100%;
-  padding:10px;
-  margin-top:10px;
-  border-radius:6px;
-  border:none;
+body::before {
+  content: ''; position: fixed; top: -200px; left: -200px;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(0,180,216,0.08) 0%, transparent 70%);
+  pointer-events: none;
 }
-
-button{
-  background:#7fffb0;
-  font-weight:bold;
-  cursor:pointer;
+body::after {
+  content: ''; position: fixed; bottom: -200px; right: -200px;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(242,101,34,0.06) 0%, transparent 70%);
+  pointer-events: none;
 }
-
-.success{
-  color:#7fffb0;
-  margin-top:10px;
-}
-
-.error{
-  color:#ff6b6b;
-  margin-top:10px;
-}
+.app { width: 100%; max-width: 520px; }
+.header { margin-bottom: 40px; text-align: center; }
+.header h1 { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; letter-spacing: -1px; color: var(--accent); text-transform: uppercase; }
+.header p { color: var(--muted); font-size: 0.75rem; margin-top: 6px; letter-spacing: 2px; text-transform: uppercase; }
+.progress-bar { width: 100%; height: 3px; background: var(--border); border-radius: 10px; margin-bottom: 40px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), #003087); border-radius: 10px; transition: width 0.4s cubic-bezier(0.4,0,0.2,1); }
+.step-indicator { text-align: center; font-size: 0.7rem; color: var(--muted); margin-bottom: 32px; letter-spacing: 2px; }
+.step-indicator span { color: var(--accent); font-weight: 500; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 36px; position: relative; animation: slideIn 0.35s cubic-bezier(0.4,0,0.2,1); transition: border-color 0.3s; }
+@keyframes slideIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+.card-label { font-size: 0.65rem; color: var(--muted); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 12px; }
+.card-question { font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 700; color: var(--text); margin-bottom: 28px; line-height: 1.3; }
+.choices { display: flex; flex-direction: column; gap: 10px; }
+.choice-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 20px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 0.9rem; cursor: pointer; text-align: right; transition: all 0.2s; position: relative; overflow: hidden; }
+.choice-btn:hover, .choice-btn.selected { border-color: var(--accent); color: var(--accent); background: rgba(0,180,216,0.07); }
+.choice-btn.selected::after { content: '✓'; position: absolute; left: 20px; top: 50%; transform: translateY(-50%); color: var(--accent); }
+.text-input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 20px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 0.95rem; outline: none; transition: border-color 0.2s; direction: ltr; }
+.text-input:focus { border-color: var(--accent); }
+.time-row { display: flex; gap: 12px; align-items: center; }
+.time-input-wrap { flex: 1; }
+.time-input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 20px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 1.2rem; outline: none; transition: border-color 0.2s; letter-spacing: 4px; direction: ltr; text-align: center; }
+.time-input:focus { border-color: var(--accent); }
+.ampm-group { display: flex; gap: 8px; }
+.ampm-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+.ampm-btn:hover, .ampm-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(0,180,216,0.07); }
+.nav { display: flex; justify-content: space-between; align-items: center; margin-top: 28px; gap: 12px; }
+.btn-next { background: var(--accent); color: #071530; border: none; border-radius: 10px; padding: 14px 32px; font-family: 'Syne', sans-serif; font-size: 0.9rem; font-weight: 700; cursor: pointer; letter-spacing: 1px; text-transform: uppercase; transition: all 0.2s; margin-right: auto; }
+.btn-next:hover { opacity: 0.85; transform: translateY(-1px); }
+.btn-back { background: transparent; border: 1px solid var(--border); border-radius: 10px; padding: 14px 20px; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 0.8rem; cursor: pointer; transition: all 0.2s; margin-right: auto; }
+.btn-back:hover { border-color: var(--muted); color: var(--text); }
+.summary { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 36px; animation: slideIn 0.35s cubic-bezier(0.4,0,0.2,1); }
+.summary h2 { font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 800; color: var(--accent); margin-bottom: 24px; }
+.summary-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); gap: 16px; }
+.summary-row:last-of-type { border-bottom: none; }
+.summary-key { font-size: 0.7rem; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; white-space: nowrap; }
+.summary-val { color: var(--text); font-size: 0.9rem; text-align: left; word-break: break-all; }
+.btn-submit { width: 100%; background: var(--accent2); color: #fff; border: none; border-radius: 10px; padding: 16px; font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 800; cursor: pointer; letter-spacing: 2px; text-transform: uppercase; margin-top: 24px; transition: all 0.2s; }
+.btn-submit:hover { opacity: 0.85; }
+.btn-edit { width: 100%; background: transparent; border: 1px solid var(--border); border-radius: 10px; padding: 14px; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 0.85rem; cursor: pointer; margin-top: 10px; transition: all 0.2s; }
+.btn-edit:hover { border-color: var(--accent); color: var(--accent); }
+.records-badge { position: fixed; top: 20px; left: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; font-size: 0.7rem; color: var(--muted); letter-spacing: 1px; transition: all 0.3s; }
+.records-badge span { color: var(--accent); font-weight: 500; }
+.download-btn { position: fixed; top: 20px; right: 20px; background: var(--surface); border: 1px solid var(--accent); border-radius: 8px; padding: 8px 14px; font-size: 0.7rem; color: var(--accent); letter-spacing: 1px; cursor: pointer; font-family: 'DM Mono', monospace; transition: all 0.2s; }
+.download-btn:hover { background: rgba(0,180,216,0.1); }
+.download-btn:disabled { opacity: 0.3; cursor: not-allowed; border-color: var(--border); color: var(--muted); }
+.error-hint { color: var(--accent2); font-size: 0.75rem; margin-top: 10px; letter-spacing: 1px; display: none; }
+.error-hint.show { display: block; }
 </style>
 </head>
 <body>
-
-<div class="card">
-  <h2>BDR Lead Form</h2>
-
-  <select id="bdrName">
-    <option value="">בחרי BDR</option>
-    <option>Itamar</option>
-    <option>Eyal</option>
-    <option>Yulia</option>
-  </select>
-
-  <input id="firstName" placeholder="Lead First Name">
-  <input id="email" placeholder="Lead Email">
-
-  <select id="meetingDate">
-    <option value="">Meeting Date</option>
-    <option>Today</option>
-    <option>Tomorrow</option>
-    <option>On Monday</option>
-  </select>
-
-  <input id="meetingTime" placeholder="HH:MM">
-  <select id="ampm">
-    <option value="">AM/PM</option>
-    <option>AM</option>
-    <option>PM</option>
-  </select>
-
-  <button onclick="submitLead()">SAVE LEAD</button>
-
-  <div id="msg"></div>
+<div class="records-badge" id="recordsBadge">LEADS: <span id="recordCount">0</span></div>
+<button class="download-btn" id="downloadBtn" onclick="downloadExcel()" disabled>↓ EXPORT EXCEL</button>
+<div class="app">
+  <div class="header">
+    <h1>BDR Form</h1>
+    <p>Lead Entry System</p>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  <div class="step-indicator">STEP <span id="stepNum">1</span> OF <span id="totalSteps">5</span></div>
+  <div id="formArea"></div>
 </div>
 
 <script>
-
+// ✅ NEW: Flow URL (Power Automate HTTP endpoint)
 const FLOW_URL = "https://defaulta93ccb028e3344398bd5e19c0ac1fd.1b.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/e0556640b3cb4f3f997229e2699bfcce/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=mAziR165qpVg6EeOQQP5oi3sb4-B1SeXiAaSbhDUVFI";
 
-async function submitLead(){
+const STEPS = [
+  {
+    key: 'bdrName', label: 'BDR', question: 'BDR Name', type: 'choice',
+    options: ['Itamar Hacohen Belhassen', 'Eyal Yadin', 'Steven Segawa', 'Simon Hochberg', 'Yulia Leonova', 'Rachel Harel']
+  },
+  { key: 'firstName', label: 'LEAD', question: "Lead's First Name", type: 'text', placeholder: 'Enter first name...' },
+  { key: 'email', label: 'CONTACT', question: "Lead's Email", type: 'text', placeholder: 'email@company.com' },
+  { key: 'meetingDate', label: 'MEETING', question: 'Meeting Date', type: 'choice', options: ['today', 'tomorrow', 'on Monday'] },
+  { key: 'meetingTime', label: 'MEETING', question: 'Meeting Time', type: 'time' }
+];
 
-  const payload = {
-    bdrName: document.getElementById("bdrName").value,
-    firstName: document.getElementById("firstName").value,
-    email: document.getElementById("email").value,
-    meetingDate: document.getElementById("meetingDate").value,
-    meetingTime: document.getElementById("meetingTime").value,
-    ampm: document.getElementById("ampm").value,
-    timestamp: new Date().toISOString()
+let current = 0, answers = {}, records = [];
+document.getElementById('totalSteps').textContent = STEPS.length;
+
+function getErrorMessage(key, value) {
+  if (key === 'firstName') {
+    const v = (value || '').trim();
+    if (!v.length) return 'Please enter a first name';
+    if (!/^[A-Z]/.test(v)) return 'First name must start with a capital letter (A-Z)';
+    if (!/^[A-Za-z]+$/.test(v)) return 'First name must contain English letters only';
+  }
+  if (key === 'email') {
+    const v = (value || '').trim();
+    if (!v.length) return 'Please enter an email address';
+    if (!v.includes('@')) return 'Email must contain @';
+  }
+  return 'Please fill this field to continue';
+}
+
+function canProceed() {
+  const step = STEPS[current];
+  if (step.type === 'choice') return !!answers[step.key];
+  if (step.key === 'firstName') {
+    const v = (answers.firstName || '').trim();
+    return v.length > 0 && /^[A-Z]/.test(v) && /^[A-Za-z]+$/.test(v);
+  }
+  if (step.key === 'email') {
+    const v = (answers.email || '').trim();
+    return v.length > 0 && v.includes('@');
+  }
+  if (step.type === 'text') return (answers[step.key] || '').trim().length > 0;
+  if (step.type === 'time') return /^\d{2}:\d{2}$/.test(answers.meetingTime || '') && !!answers.ampm;
+  return true;
+}
+
+function render() {
+  const area = document.getElementById('formArea');
+  const isSummary = current === STEPS.length;
+  document.getElementById('stepNum').textContent = isSummary ? STEPS.length : current + 1;
+  document.getElementById('progressFill').style.width = ((current / STEPS.length) * 100) + '%';
+  if (isSummary) { renderSummary(area); return; }
+
+  const step = STEPS[current];
+  let inputHTML = '';
+
+  if (step.type === 'choice') {
+    inputHTML = `<div class="choices">` +
+      step.options.map(opt =>
+        `<button class="choice-btn ${answers[step.key] === opt ? 'selected' : ''}" onclick="selectChoice(this,'${opt.replace(/'/g, "\\'")}')">${opt}</button>`
+      ).join('') + `</div>`;
+  } else if (step.type === 'text') {
+    inputHTML = `<input class="text-input" id="mainInput" type="text" placeholder="${step.placeholder}" value="${answers[step.key] || ''}" oninput="answers['${step.key}']=this.value" onkeydown="if(event.key==='Enter')nextStep()" />`;
+  } else if (step.type === 'time') {
+    const t = answers.meetingTime || '', ap = answers.ampm || '';
+    inputHTML = `<div class="time-row">
+      <div class="time-input-wrap">
+        <input class="time-input" id="mainInput" type="text" maxlength="5" placeholder="00:00" value="${t}" oninput="handleTimeInput(this)" onkeydown="if(event.key==='Enter')nextStep()" />
+      </div>
+      <div class="ampm-group">
+        <button class="ampm-btn ${ap==='AM'?'active':''}" onclick="selectAMPM('AM')">AM</button>
+        <button class="ampm-btn ${ap==='PM'?'active':''}" onclick="selectAMPM('PM')">PM</button>
+      </div>
+    </div>`;
+  }
+
+  area.innerHTML = `<div class="card" id="mainCard">
+    <div class="card-label">${step.label}</div>
+    <div class="card-question">${step.question}</div>
+    ${inputHTML}
+    <div class="error-hint" id="errorHint"></div>
+    <div class="nav">
+      ${current > 0 ? `<button class="btn-back" onclick="prevStep()">← BACK</button>` : '<div></div>'}
+      <button class="btn-next" onclick="nextStep()">${current === STEPS.length - 1 ? 'REVIEW →' : 'NEXT →'}</button>
+    </div>
+  </div>`;
+
+  if (step.type !== 'choice') {
+    setTimeout(() => { const el = document.getElementById('mainInput'); if (el) el.focus(); }, 50);
+  }
+}
+
+function handleTimeInput(input) {
+  let raw = input.value.replace(/[^0-9]/g, '');
+  if (raw.length > 4) raw = raw.slice(0, 4);
+  let formatted = raw;
+  if (raw.length >= 3) formatted = raw.slice(0,2) + ':' + raw.slice(2);
+  input.value = formatted;
+  answers.meetingTime = formatted;
+}
+
+function selectChoice(btn, opt) {
+  answers[STEPS[current].key] = opt;
+  render();
+  setTimeout(() => nextStep(), 220);
+}
+
+function selectAMPM(val) { answers.ampm = val; render(); }
+
+function nextStep() {
+  if (!canProceed()) {
+    const card = document.getElementById('mainCard');
+    const hint = document.getElementById('errorHint');
+    if (card) { card.style.borderColor = 'var(--accent2)'; setTimeout(() => card.style.borderColor = 'var(--border)', 800); }
+    if (hint) { hint.textContent = getErrorMessage(STEPS[current].key, answers[STEPS[current].key]); hint.classList.add('show'); }
+    return;
+  }
+  current++; render();
+}
+
+function prevStep() { current--; render(); }
+
+function renderSummary(area) {
+  const fields = [
+    { key: 'bdrName', label: 'BDR NAME' }, { key: 'firstName', label: 'FIRST NAME' },
+    { key: 'email', label: 'EMAIL' }, { key: 'meetingDate', label: 'MEETING DATE' },
+    { key: 'meetingTime', label: 'MEETING TIME' },
+  ];
+  const rows = fields.map(f => {
+    let val = answers[f.key] || '—';
+    if (f.key === 'meetingTime') val = `${answers.meetingTime || '—'} ${answers.ampm || ''}`;
+    return `<div class="summary-row"><div class="summary-key">${f.label}</div><div class="summary-val">${val}</div></div>`;
+  }).join('');
+  area.innerHTML = `<div class="summary"><h2>Review Entry</h2>${rows}
+    <button class="btn-submit" onclick="submitRecord()">✓ SAVE LEAD</button>
+    <button class="btn-edit" onclick="prevStep()">← EDIT</button>
+  </div>`;
+}
+
+// ✅ CHANGED: only this function (now also sends to Power Automate)
+async function submitRecord() {
+  const row = {
+    'BDR Name': answers.bdrName || '',
+    "Lead's First Name": answers.firstName || '',
+    "Lead's Email": answers.email || '',
+    'Meeting Date': answers.meetingDate || '',
+    'Meeting Time': answers.meetingTime || '',
+    'AM/PM': answers.ampm || ''
   };
 
-  try{
-    const res = await fetch(FLOW_URL,{
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
+  // 1) Send to Excel Online via Power Automate (non-blocking UI-wise)
+  try {
+    const payload = {
+      bdrName: row['BDR Name'],
+      firstName: row["Lead's First Name"],
+      email: row["Lead's Email"],
+      meetingDate: row['Meeting Date'],
+      meetingTime: row['Meeting Time'],
+      ampm: row['AM/PM'],
+      timestamp: new Date().toISOString()
+    };
+
+    const res = await fetch(FLOW_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
 
-    if(!res.ok) throw new Error("Failed");
-
-    document.getElementById("msg").innerHTML = "<div class='success'>Lead saved ✔</div>";
-
-  }catch(err){
-    document.getElementById("msg").innerHTML = "<div class='error'>Error saving lead</div>";
+    if (!res.ok) throw new Error(`Flow call failed: ${res.status}`);
+  } catch (e) {
+    // If sending fails, show a clear message but keep local record behavior
+    alert('Saved locally, but failed to save to Excel Online (Power Automate). Check Flow Run History / console.');
   }
 
+  // 2) Original behavior (unchanged)
+  records.push(row);
+  document.getElementById('recordCount').textContent = records.length;
+  document.getElementById('downloadBtn').disabled = false;
+
+  const badge = document.getElementById('recordsBadge');
+  badge.style.borderColor = 'var(--accent)'; badge.style.color = 'var(--accent)';
+  setTimeout(() => { badge.style.borderColor = 'var(--border)'; badge.style.color = 'var(--muted)'; }, 1200);
+
+  answers = {}; current = 0; render();
 }
 
-</script>
+function downloadExcel() {
+  if (!records.length) return;
+  const headers = ['BDR Name', "Lead's First Name", "Lead's Email", 'Meeting Date', 'Meeting Time', 'AM/PM'];
+  const data = [headers, ...records.map(r => headers.map(h => r[h] || ''))];
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  ws['!cols'] = [24, 20, 30, 15, 15, 8].map(w => ({ wch: w }));
+  XLSX.utils.book_append_sheet(wb, ws, 'BDR Leads');
+  XLSX.writeFile(wb, 'BDR_Leads.xlsx');
+}
 
+render();
+</script>
 </body>
 </html>
