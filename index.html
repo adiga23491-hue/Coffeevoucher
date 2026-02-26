@@ -400,7 +400,7 @@
  * 1) הדביקי כאן את כתובת ה-Flow שלך (Power Automate)
  *    Example: https://prod-XX.westeurope.logic.azure.com:443/workflows/....
  */
-const FLOW_URL = "https://defaulta93ccb028e3344398bd5e19c0ac1fd.1b.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/afb3000a273c40f1a0550115e11fe99d/triggers/manual/paths/invoke?api-version=1";
+const FLOW_URL = "https://defaulta93ccb028e3344398bd5e19c0ac1fd.1b.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/e0556640b3cb4f3f997229e2699bfcce/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=mAziR165qpVg6EeOQQP5oi3sb4-B1SeXiAaSbhDUVFI";
 
 const STEPS = [
   { key: 'bdrName',     label: 'BDR',     question: 'BDR Name',           type: 'choice', options: ['Itamar', 'Eyal', 'Yulia'] },
@@ -557,7 +557,7 @@ function renderSummary(area) {
  * במקום לשמור רק מקומית, היא שולחת את הרשומה ל-Power Automate (שמכניס ל-Excel Online).
  */
 async function submitRecord() {
-  if (!FLOW_URL || FLOW_URL.includes("https://defaulta93ccb028e3344398bd5e19c0ac1fd.1b.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/afb3000a273c40f1a0550115e11fe99d/triggers/manual/paths/invoke?api-version=1")) {
+  if (!FLOW_URL || FLOW_URL.includes("https://defaulta93ccb028e3344398bd5e19c0ac1fd.1b.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/e0556640b3cb4f3f997229e2699bfcce/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=mAziR165qpVg6EeOQQP5oi3sb4-B1SeXiAaSbhDUVFI")) {
     alert("שימי את ה-Flow URL בתוך FLOW_URL לפני שימוש.");
     return;
   }
