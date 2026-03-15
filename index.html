@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -314,9 +313,7 @@ async function submitRecord() {
     'BDR Name': answers.bdrName || '',
     "Lead's First Name": answers.firstName || '',
     "Lead's Email": answers.email || '',
-    'Meeting Date': (answers.meetingDateType === 'today')
-      ? 'Today'
-      : (formatDisplayDate(answers.meetingDate) || ''),
+    'Meeting Date': answers.meetingDate || '',
     'Meeting Time': answers.meetingTime || '',
     'AM/PM': answers.ampm || ''
   };
@@ -369,4 +366,3 @@ render();
 </script>
 </body>
 </html>
-```
