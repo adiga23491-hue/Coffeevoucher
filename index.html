@@ -48,17 +48,14 @@ body::after {
 .choice-btn:hover, .choice-btn.selected { border-color: var(--accent); color: var(--accent); background: rgba(0,180,216,0.07); }
 .choice-btn.selected::after { content: '✓'; position: absolute; left: 20px; top: 50%; transform: translateY(-50%); color: var(--accent); }
 
-/* Date picker button style */
 .date-pick-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 20px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 0.9rem; cursor: pointer; text-align: right; transition: all 0.2s; position: relative; overflow: hidden; width: 100%; display: flex; align-items: center; justify-content: space-between; }
 .date-pick-btn:hover, .date-pick-btn.selected { border-color: var(--accent); color: var(--accent); background: rgba(0,180,216,0.07); }
 .date-pick-btn .cal-icon { font-size: 1.1rem; opacity: 0.7; }
 .date-pick-btn .selected-date { font-size: 0.8rem; color: var(--accent); margin-right: 8px; }
 
-/* Hidden date input overlay */
 .date-input-hidden {
   position: absolute; opacity: 0; width: 100%; height: 100%;
   top: 0; left: 0; cursor: pointer;
-  /* Make sure the native picker still opens on click */
 }
 
 .text-input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 20px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 0.95rem; outline: none; transition: border-color 0.2s; direction: ltr; }
@@ -178,7 +175,10 @@ function render() {
   const isSummary = current === STEPS.length;
   document.getElementById('stepNum').textContent = isSummary ? STEPS.length : current + 1;
   document.getElementById('progressFill').style.width = ((current / STEPS.length) * 100) + '%';
-  if (isSummary) { renderSummary(area); return; }
+  if (isSummary) {
+    renderSummary(area);
+    return;
+  }
 
   const step = STEPS[current];
   let inputHTML = '';
@@ -192,7 +192,7 @@ function render() {
   } else if (step.type === 'meetingDate') {
     const selectedDate = answers.meetingDate || '';
     const isToday = answers.meetingDateType === 'today';
-    const isPick  = answers.meetingDateType === 'pick';
+    const isPick = answers.meetingDateType === 'pick';
 
     inputHTML = `<div class="choices">
       <button class="choice-btn ${isToday ? 'selected' : ''}" onclick="selectToday()">Today</button>
@@ -213,14 +213,15 @@ function render() {
     inputHTML = `<input class="text-input" id="mainInput" type="text" placeholder="${step.placeholder}" value="${answers[step.key] || ''}" oninput="answers['${step.key}']=this.value" onkeydown="if(event.key==='Enter')nextStep()" />`;
 
   } else if (step.type === 'time') {
-    const t = answers.meetingTime || '', ap = answers.ampm || '';
+    const t = answers.meetingTime || '';
+    const ap = answers.ampm || '';
     inputHTML = `<div class="time-row">
       <div class="time-input-wrap">
         <input class="time-input" id="mainInput" type="text" maxlength="5" placeholder="00:00" value="${t}" oninput="handleTimeInput(this)" onkeydown="if(event.key==='Enter')nextStep()" />
       </div>
       <div class="ampm-group">
-        <button class="ampm-btn ${ap==='AM'?'active':''}" onclick="selectAMPM('AM')">AM</button>
-        <button class="ampm-btn ${ap==='PM'?'active':''}" onclick="selectAMPM('PM')">PM</button>
+        <button class="ampm-btn ${ap === 'AM' ? 'active' : ''}" onclick="selectAMPM('AM')">AM</button>
+        <button class="ampm-btn ${ap === 'PM' ? 'active' : ''}" onclick="selectAMPM('PM')">PM</button>
       </div>
     </div>`;
   }
@@ -237,7 +238,10 @@ function render() {
   </div>`;
 
   if (step.type !== 'choice' && step.type !== 'meetingDate') {
-    setTimeout(() => { const el = document.getElementById('mainInput'); if (el) el.focus(); }, 50);
+    setTimeout(() => {
+      const el = document.getElementById('mainInput');
+      if (el) el.focus();
+    }, 50);
   }
 }
 
@@ -260,7 +264,7 @@ function handleTimeInput(input) {
   let raw = input.value.replace(/[^0-9]/g, '');
   if (raw.length > 4) raw = raw.slice(0, 4);
   let formatted = raw;
-  if (raw.length >= 3) formatted = raw.slice(0,2) + ':' + raw.slice(2);
+  if (raw.length >= 3) formatted = raw.slice(0, 2) + ':' + raw.slice(2);
   input.value = formatted;
   answers.meetingTime = formatted;
 }
@@ -271,37 +275,59 @@ function selectChoice(btn, opt) {
   setTimeout(() => nextStep(), 220);
 }
 
-function selectAMPM(val) { answers.ampm = val; render(); }
+function selectAMPM(val) {
+  answers.ampm = val;
+  render();
+}
 
 function nextStep() {
   if (!canProceed()) {
     const card = document.getElementById('mainCard');
     const hint = document.getElementById('errorHint');
-    if (card) { card.style.borderColor = 'var(--accent2)'; setTimeout(() => card.style.borderColor = 'var(--border)', 800); }
-    if (hint) { hint.textContent = getErrorMessage(STEPS[current].key, answers[STEPS[current].key]); hint.classList.add('show'); }
+    if (card) {
+      card.style.borderColor = 'var(--accent2)';
+      setTimeout(() => card.style.borderColor = 'var(--border)', 800);
+    }
+    if (hint) {
+      hint.textContent = getErrorMessage(STEPS[current].key, answers[STEPS[current].key]);
+      hint.classList.add('show');
+    }
     return;
   }
-  current++; render();
+  current++;
+  render();
 }
 
-function prevStep() { current--; render(); }
+function prevStep() {
+  current--;
+  render();
+}
 
 function renderSummary(area) {
   const fields = [
-    { key: 'bdrName', label: 'BDR NAME' }, { key: 'firstName', label: 'FIRST NAME' },
-    { key: 'email', label: 'EMAIL' }, { key: 'meetingDate', label: 'MEETING DATE' },
-    { key: 'meetingTime', label: 'MEETING TIME' },
+    { key: 'bdrName', label: 'BDR NAME' },
+    { key: 'firstName', label: 'FIRST NAME' },
+    { key: 'email', label: 'EMAIL' },
+    { key: 'meetingDate', label: 'MEETING DATE' },
+    { key: 'meetingTime', label: 'MEETING TIME' }
   ];
+
   const rows = fields.map(f => {
     let val = answers[f.key] || '—';
+
     if (f.key === 'meetingDate') {
       val = answers.meetingDateType === 'today'
         ? 'Today'
         : (formatDisplayDate(answers.meetingDate) || '—');
     }
-    if (f.key === 'meetingTime') val = `${answers.meetingTime || '—'} ${answers.ampm || ''}`;
+
+    if (f.key === 'meetingTime') {
+      val = `${answers.meetingTime || '—'} ${answers.ampm || ''}`;
+    }
+
     return `<div class="summary-row"><div class="summary-key">${f.label}</div><div class="summary-val">${val}</div></div>`;
   }).join('');
+
   area.innerHTML = `<div class="summary"><h2>Review Entry</h2>${rows}
     <button class="btn-submit" onclick="submitRecord()">Send</button>
     <button class="btn-edit" onclick="prevStep()">← EDIT</button>
@@ -309,11 +335,15 @@ function renderSummary(area) {
 }
 
 async function submitRecord() {
+  const meetingDateValue = answers.meetingDateType === 'today'
+    ? 'Today'
+    : (answers.meetingDate || '');
+
   const row = {
     'BDR Name': answers.bdrName || '',
     "Lead's First Name": answers.firstName || '',
     "Lead's Email": answers.email || '',
-    'Meeting Date': answers.meetingDate || '',
+    'Meeting Date': meetingDateValue,
     'Meeting Time': answers.meetingTime || '',
     'AM/PM': answers.ampm || ''
   };
@@ -323,7 +353,7 @@ async function submitRecord() {
       bdrName: row['BDR Name'],
       firstName: row["Lead's First Name"],
       email: row["Lead's Email"],
-      meetingDate: row['Meeting Date'],
+      meetingDate: meetingDateValue,
       meetingTime: row['Meeting Time'],
       ampm: row['AM/PM'],
       timestamp: new Date().toISOString()
@@ -345,14 +375,21 @@ async function submitRecord() {
   document.getElementById('downloadBtn').disabled = false;
 
   const badge = document.getElementById('recordsBadge');
-  badge.style.borderColor = 'var(--accent)'; badge.style.color = 'var(--accent)';
-  setTimeout(() => { badge.style.borderColor = 'var(--border)'; badge.style.color = 'var(--muted)'; }, 1200);
+  badge.style.borderColor = 'var(--accent)';
+  badge.style.color = 'var(--accent)';
+  setTimeout(() => {
+    badge.style.borderColor = 'var(--border)';
+    badge.style.color = 'var(--muted)';
+  }, 1200);
 
-  answers = {}; current = 0; render();
+  answers = {};
+  current = 0;
+  render();
 }
 
 function downloadExcel() {
   if (!records.length) return;
+
   const headers = ['BDR Name', "Lead's First Name", "Lead's Email", 'Meeting Date', 'Meeting Time', 'AM/PM'];
   const data = [headers, ...records.map(r => headers.map(h => r[h] || ''))];
   const wb = XLSX.utils.book_new();
