@@ -296,7 +296,7 @@ function renderSummary(area) {
     let val = answers[f.key] || '—';
     if (f.key === 'meetingDate') {
       val = answers.meetingDateType === 'today'
-        ? `Today — ${getTodayStr()}`
+        ? `Today`
         : (formatDisplayDate(answers.meetingDate) || '—');
     }
     if (f.key === 'meetingTime') val = `${answers.meetingTime || '—'} ${answers.ampm || ''}`;
